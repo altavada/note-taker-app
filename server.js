@@ -3,6 +3,8 @@ const path = require('path');
 const db = require('./db/db.json');
 const uuid = require('./helpers/uuid');
 const fs = require('fs');
+const util = require('util');
+const readFromFile = util.promisify(fs.readFile);
 const PORT = 3001;
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -29,14 +31,21 @@ app.post('/api/notes', async (req, res) => {
         }
         const priorNotes = JSON.parse(await fs.readFileSync('./db/db.json'));
         priorNotes.push(newNote);
-        fs.writeFile('./db/db.json', JSON.stringify(priorNotes), (err) => 
-            err ? console.log(err) : res.json('./db/db.json'));
+        fs.writeFileSync('./db/db.json', JSON.stringify(priorNotes), (err) => {
+            err ? 
+            console.log(err) 
+            : console.log(`Review for ${newNote.title} has been written to JSON file`)
+            // fs.readFileSync('./db/db.json', 'utf8', (err, data) => {
+            //     err ? console.log(err) :
+            //     console.log('here is res.data', data)
+            // })
+        });
         const response = {
             status: 'success',
             body: newNote,
         };
         console.log(response);
-        res.status(201).json(response);
+        return res.json(response);
     } else {
         res.status(500).json('Error in posting review');
     }
