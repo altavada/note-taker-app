@@ -1,11 +1,8 @@
 const express = require('express');
 const path = require('path');
-const db = require('./db/db.json');
 const uuid = require('./helpers/uuid');
 const fs = require('fs');
-const util = require('util');
-const readFromFile = util.promisify(fs.readFile);
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -19,26 +16,30 @@ app.get('/notes', (req, res) => {
     res.sendFile(path.join(__dirname, '/public/notes.html'));
 });
 
-app.get('/api/notes', (req, res) => res.json(db));
+app.get('/api/notes', (req, res) => {
+    fs.readFile('./db/db.json', 'utf8', (err, data) => {
+        if (err) {
+            console.log(err);
+        } else {
+            res.json(JSON.parse(data));
+        }
+    })
+});
 
-app.post('/api/notes', async (req, res) => {
+app.post('/api/notes', (req, res) => {
     const { title, text } = req.body;
     if (title && text) {
         const newNote = {
             title,
             text,
             id: uuid(),
-        }
-        const priorNotes = JSON.parse(await fs.readFileSync('./db/db.json'));
+        };
+        const priorNotes = JSON.parse(fs.readFileSync('./db/db.json'));
         priorNotes.push(newNote);
         fs.writeFileSync('./db/db.json', JSON.stringify(priorNotes), (err) => {
-            err ? 
-            console.log(err) 
+            err 
+            ? console.log(err) 
             : console.log(`Review for ${newNote.title} has been written to JSON file`)
-            // fs.readFileSync('./db/db.json', 'utf8', (err, data) => {
-            //     err ? console.log(err) :
-            //     console.log('here is res.data', data)
-            // })
         });
         const response = {
             status: 'success',
@@ -49,7 +50,7 @@ app.post('/api/notes', async (req, res) => {
     } else {
         res.status(500).json('Error in posting review');
     }
-})
+});
 
 app.listen(PORT, () => {
     console.log(`Example app listening at http://localhost:${PORT}`);
