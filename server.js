@@ -1,11 +1,8 @@
 const express = require('express');
 const path = require('path');
-const db = require('./db/db.json');
 const uuid = require('./helpers/uuid');
 const fs = require('fs');
-const util = require('util');
-const readFromFile = util.promisify(fs.readFile);
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -36,7 +33,7 @@ app.post('/api/notes', (req, res) => {
             title,
             text,
             id: uuid(),
-        }
+        };
         const priorNotes = JSON.parse(fs.readFileSync('./db/db.json'));
         priorNotes.push(newNote);
         fs.writeFileSync('./db/db.json', JSON.stringify(priorNotes), (err) => {
@@ -53,7 +50,7 @@ app.post('/api/notes', (req, res) => {
     } else {
         res.status(500).json('Error in posting review');
     }
-})
+});
 
 app.listen(PORT, () => {
     console.log(`Example app listening at http://localhost:${PORT}`);
